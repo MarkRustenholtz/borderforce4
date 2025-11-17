@@ -2636,6 +2636,47 @@ function confirmCallCORG() {
   };
 }
 
+// Formate JJ/MM/AAAA et met à jour l'âge automatiquement
+function formatDOB(input) {
+  let numbers = input.value.replace(/\D/g, ''); // on garde seulement les chiffres
+
+  // Auto-formatage JJ/MM/AAAA
+  if (numbers.length >= 5) {
+    input.value = numbers.slice(0, 2) + "/" +
+                  numbers.slice(2, 4) + "/" +
+                  numbers.slice(4, 8);
+  } else if (numbers.length >= 3) {
+    input.value = numbers.slice(0, 2) + "/" + numbers.slice(2, 4);
+  } else {
+    input.value = numbers;
+  }
+
+  // Si la date n'est pas complète → on ne fait rien
+  if (input.value.length !== 10) return;
+
+  // On calcule l'âge à partir de la date complète
+  const age = calculateAge(input.value);
+  if (age === null) return;
+
+  // ESI
+  if (input.id === "esiDob") {
+    const ageNumInput = document.getElementById("esiAgeNum");
+    ageNumInput.value = age;
+    // on met à jour Majeur/Mineur
+    if (typeof majEsiStatut === "function") {
+      majEsiStatut();
+    }
+  }
+
+  // PASSEUR
+  if (input.id === "passeurDob") {
+    const ageNumInput = document.getElementById("passeurAgeNum");
+    ageNumInput.value = age;
+    if (typeof majPasseurStatut === "function") {
+      majPasseurStatut();
+    }
+  }
+}
 
 // Formate JJ/MM/AAAA et met à jour l'âge automatiquement
 function formatDOB(input) {
@@ -2652,28 +2693,30 @@ function formatDOB(input) {
     input.value = numbers;
   }
 
-  // Détection automatique : ESI ou PASSEUR
+  // Si la date n'est pas complète → on ne fait rien
+  if (input.value.length !== 10) return;
+
+  // On calcule l'âge à partir de la date complète
+  const age = calculateAge(input.value);
+  if (age === null) return;
+
+  // ESI
   if (input.id === "esiDob") {
-    updateAgeFromDOB("esiDob", "esiAgeNum", majEsiStatut);
-  } else if (input.id === "passeurDob") {
-    updateAgeFromDOB("passeurDob", "passeurAgeNum", majPasseurStatut);
+    const ageNumInput = document.getElementById("esiAgeNum");
+    ageNumInput.value = age;
+    // on met à jour Majeur/Mineur
+    if (typeof majEsiStatut === "function") {
+      majEsiStatut();
+    }
   }
-}
 
-// Calcule l'âge et remplit le champ âge
-function updateAgeFromDOB(dobId, ageNumId, callback) {
-  const dob = document.getElementById(dobId).value;
-  const ageNum = document.getElementById(ageNumId);
-
-  const age = calculateAge(dob);
-  if (age !== null) {
-    ageNum.value = age;
-
-    // Simule une saisie dans le champ âge → ça déclenche majEsiStatut()
-    const event = new Event("input", { bubbles: true });
-    ageNum.dispatchEvent(event);
-
-    if (typeof callback === "function") callback();
+  // PASSEUR
+  if (input.id === "passeurDob") {
+    const ageNumInput = document.getElementById("passeurAgeNum");
+    ageNumInput.value = age;
+    if (typeof majPasseurStatut === "function") {
+      majPasseurStatut();
+    }
   }
 }
 
@@ -2693,6 +2736,9 @@ function calculateAge(dob) {
   }
   return age;
 }
+
+
+
 
 const NATIONALITES = [
   "Afghane","Albanaise","Algérienne","Allemande","Américaine","Andorrane","Angolaise","Argentine",
