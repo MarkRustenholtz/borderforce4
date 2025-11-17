@@ -2804,20 +2804,6 @@ function attachNatAutocomplete(input) {
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.nat-autocomplete').forEach(attachNatAutocomplete);
 });
-
-// Fonction commune pour formater la date (JJ/MM/AAAA) et calculer l'âge automatiquement
-function formatDOB(input) {
-  let numbers = input.value.replace(/\D/g, ''); // chiffres uniquement
-  
-  // Auto-formatage JJ/MM/AAAA
-  if (numbers.length >= 5) {
-    input.value = numbers.slice(0, 2) + "/" + numbers.slice(2, 4) + "/" + numbers.slice(4, 8);
-  } else if (numbers.length >= 3) {
-    input.value = numbers.slice(0, 2) + "/" + numbers.slice(2, 4);
-  } else {
-    input.value = numbers;
-  }
-	
 	
 </script>
 </body>
