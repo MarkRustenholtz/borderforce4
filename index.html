@@ -960,7 +960,11 @@ html, body {
     oninput="majPasseurStatut()"
   />
 </div>
-      <input type="text" id="passeurNationalite" placeholder="Nationalité" />
+           <input id="passeurNationalite"
+       class="nat-autocomplete"
+       placeholder="Nationalité"
+       type="text"
+       autocomplete="off">
       <input type="text" id="passeurLieu" placeholder="Lieu interpellation" />
       <label for="passeurHeure">Heure interpellation :
 </label>
