@@ -883,18 +883,18 @@ html, body {
         <option value="Homme">Homme</option>
         <option value="Femme">Femme</option>
       </select>
-      <div style="display:flex; gap:8px; margin-top:8px;">
-    <input
-  id="esiDob"
-  placeholder="JJ/MM/AAAA"
-  maxlength="10"
-  oninput="formatDOB(this);"
-  type="text"
-  inputmode="numeric"
-  pattern="[0-9]*"
-  autocomplete="off"
-  enterkeyhint="next"
-/>
+     <div style="display:flex; gap:8px; margin-top:8px;">
+  <input
+    id="esiDob"
+    placeholder="JJ/MM/AAAA"
+    maxlength="10"
+    oninput="formatDOB(this);"
+    type="text"
+    inputmode="numeric"
+    pattern="[0-9]*"
+    autocomplete="off"
+    enterkeyhint="next"
+  />
   <input
     id="esiAgeNum"
     min="0"
@@ -904,6 +904,7 @@ html, body {
     style="width:60px;"
   />
 </div>
+
       <input id="esiNationalite"
        class="nat-autocomplete"
        placeholder="Nationalité"
@@ -938,18 +939,17 @@ html, body {
         <option value="Homme">Homme</option>
         <option value="Femme">Femme</option>
       </select>
-      <div style="display:flex; gap:8px; margin-top:8px;">
-    <input
-  id="passeurDob"
-  placeholder="JJ/MM/AAAA"
-  maxlength="10"
-  oninput="formatDOB(this);"
-  type="text"
-  inputmode="numeric"
-  pattern="[0-9]*"
-  autocomplete="off"
-/>
-
+     <div style="display:flex; gap:8px; margin-top:8px;">
+  <input
+    id="passeurDob"
+    placeholder="JJ/MM/AAAA"
+    maxlength="10"
+    oninput="formatDOB(this);"
+    type="text"
+    inputmode="numeric"
+    pattern="[0-9]*"
+    autocomplete="off"
+  />
   <input
     id="passeurAgeNum"
     min="0"
@@ -959,6 +959,7 @@ html, body {
     oninput="majPasseurStatut()"
   />
 </div>
+
            <input id="passeurNationalite"
        class="nat-autocomplete"
        placeholder="Nationalité"
