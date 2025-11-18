@@ -1006,8 +1006,98 @@ html, body {
     <textarea id="deroulement"
               placeholder="Déroulement détaillé..."
               oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px';"></textarea>
-  </div>
+ <!-- Saisie rapide Heure + Actions -->
+<section id="temps_action" style="margin-bottom:12px">
+  <fieldset style="border:2px solid var(--bleuFonce,#003366);border-radius:10px;padding:10px">
+    <legend style="padding:0 6px">Heure & actions</legend>
+
+    <label style="display:block;margin-top:6px">Heure</label>
+    <input type="time" id="heure_action" />
+
+    <label style="display:block;margin-top:6px">ESI (optionnel)</label>
+    <select id="esi_select">
+      <option value="">— Aucun —</option>
+      <option>ESI 1</option><option>ESI 2</option><option>ESI 3</option>
+      <option>ESI 4</option><option>ESI 5</option><option>ESI 6</option>
+      <option>ESI 7</option><option>ESI 8</option><option>ESI 9</option>
+      <option>ESI 10</option>
+    </select>
+
+    <label style="display:block;margin-top:6px">Action prédéfinie (optionnel)</label>
+    <select id="type_action" onchange="majAffichageComptage()">
+      <option value="">— Sélectionner —</option>
+
+      <optgroup label="Déplacements / mission">
+        <option>Départ de la caserne Ausseur</option>
+        <option>Arrivée à la caserne Ausseur</option>
+        <option>Départ en mission</option>
+        <option>Retour de mission</option>
+        <option>Arrivés sur site d'emploi, début de mission</option>
+        <option>Départ du site d'emploi, fin de mission</option>
+        <option>Contrôle routier</option>
+        <option>Train</option>
+        <option>Bus</option>
+      </optgroup>
+
+      <optgroup label="Prise en compte et restitution">
+        <option>Prise en compte armement, matériel et véhicule</option>
+       <option>Restitution armement, matériel et véhicule</option>
+      </optgroup>
+
+      <optgroup label="Service">
+        
+        <option>Début de service</option>
+        <option>Fin de service</option>
+      </optgroup>
+    </select>
+
+    <label style="display:block;margin-top:6px">Texte libre (optionnel)</label>
+    <input id="texte_libre" placeholder="Ex. Bus / Patrouille pédestre…" oninput="majAffichageComptage()" />
+
+    <div id="bloc_comptage" style="display:none;margin-top:8px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div>
+          <label>Personnes contrôlées</label>
+          <input type="number" id="nb_controles" min="0" placeholder="Ex. 48" />
+        </div>
+        <div>
+          <label>Descendus</label>
+          <input type="number" id="nb_descendus" min="0" placeholder="Ex. 18" />
+        </div>
+      </div>
+    </div>
+
+    <button type="button" onclick="ajouterDeroulementFlex()" style="margin-top:10px;background:#003366;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer">
+      Ajouter au déroulement
+    </button>
+  </fieldset>
+</section>
+
+<textarea id="deroulement" oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px';" placeholder="Déroulement détaillé..."></textarea>
 </div>
+</div>
+<!-- Page Pulsar -->
+<div class="page" id="pulsarPage">
+<div class="page-header">
+<button class="back-button" onclick="showPage('homePage')">
+<i class="fas fa-arrow-left"></i> Retour
+    </button>
+<div class="page-title">PULSAR</div>
+</div>
+<div class="page-content">
+<div style="text-align: center; margin-top: 50px;">
+<label>
+<input id="pulsarOui" name="pulsar" onclick="onPulsarChange()" type="radio"/>
+<span class="yes">OUI</span>
+</label>
+<label>
+<input id="pulsarNon" name="pulsar" onclick="onPulsarChange()" type="radio"/>
+<span class="no">NON</span>
+</label>
+</div>
+</div>
+</div>
+
 
 <!-- Page Pulsar -->
 <div id="pulsarPage" class="page">
@@ -2851,7 +2941,68 @@ function attachNatAutocomplete(input) {
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.nat-autocomplete').forEach(attachNatAutocomplete);
 });
-	
+function formatHeureHhmm(heureValue){
+  if(!heureValue) return "";
+  const [h, m] = heureValue.split(":");
+  return `${parseInt(h,10)}h${m}`;
+}
+function plural(nb, s, p){
+  const n = Number(nb);
+  return (n === 1) ? s : p;
+}
+function buildSuffixComptage(nbCtrl, nbDesc){
+  const parts = [];
+  const n1 = nbCtrl === "" ? NaN : parseInt(nbCtrl, 10);
+  const n2 = nbDesc === "" ? NaN : parseInt(nbDesc, 10);
+  if(!Number.isNaN(n1)) parts.push(`${n1} ${plural(n1,"personne contrôlée","personnes contrôlées")}`);
+  if(!Number.isNaN(n2)) parts.push(`${n2} ${plural(n2,"descendu","descendus")}`);
+  return parts.length ? " — " + parts.join(", ") : "";
+}
+function triJoin(parts){ return parts.filter(Boolean).join(" — "); }
+
+function majAffichageComptage(){
+  const action = (document.getElementById("type_action").value || "").toLowerCase();
+  const libre  = (document.getElementById("texte_libre").value || "").toLowerCase();
+  // ✅ Affiche les champs de comptage pour "bus" ou "train"
+  const show = action.includes("bus") || libre.includes("bus") || action.includes("train") || libre.includes("train");
+  const bloc = document.getElementById("bloc_comptage");
+  if(bloc) bloc.style.display = show ? "block" : "none";
+}
+
+function ajouterDeroulementFlex(){
+  const zone = document.getElementById("deroulement");
+  if(!zone){ alert("⚠️ Zone 'Déroulement' introuvable."); return; }
+
+  const heure = document.getElementById("heure_action").value;
+  const esi   = (document.getElementById("esi_select").value || "").trim();
+  const act   = (document.getElementById("type_action").value || "").trim();
+  const libre = (document.getElementById("texte_libre").value || "").trim();
+  const nbCtrl = document.getElementById("nb_controles").value;
+  const nbDesc = document.getElementById("nb_descendus").value;
+
+  const hStr = formatHeureHhmm(heure);
+  const corps = triJoin([esi, act, libre]);
+  const suffix = buildSuffixComptage(nbCtrl, nbDesc);
+
+  if(!hStr && !corps && !suffix){
+    alert("Renseigne au moins l’heure ou une action (ESI, prédéfinie ou texte libre).");
+    return;
+  }
+
+  const ligne = triJoin([hStr, corps]) + suffix;
+
+  zone.value = zone.value.trim() ? (zone.value + "\n" + ligne) : ligne;
+  zone.dispatchEvent(new Event('input')); // garde ton auto-redimensionnement
+
+  document.getElementById("heure_action").value = "";
+  document.getElementById("esi_select").value = "";
+  document.getElementById("type_action").value = "";
+  document.getElementById("texte_libre").value = "";
+  document.getElementById("nb_controles").value = "";
+  document.getElementById("nb_descendus").value = "";
+
+  majAffichageComptage();
+}	
 </script>
 </body>
 </html>
