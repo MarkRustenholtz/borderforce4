@@ -1082,6 +1082,8 @@ html, body {
 </section>
  
 <textarea id="deroulement" oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px';" placeholder="Déroulement détaillé..."></textarea>
+<div id="deroulementAuto" class="small-note" style="margin-top:10px;"></div>
+
 </div>
 </div>
 <!-- Page Pulsar -->
@@ -2273,6 +2275,46 @@ function formatDateIntervention(dateStr) {
     return `${jour}/${mois}/${annee}`;
 }
 
+// Compteurs pour ESI 1, ESI 2... et PASSEUR 1, 2...
+let compteurEsi = 0;
+let compteurPasseur = 0;
+
+// Ajoute une ligne dans le déroulement de la mission (dans #deroulementPage)
+function ajouterLigneDeroulementDepuisFiche(fiche) {
+  const pageDeroulement = document.getElementById('deroulementPage');
+  if (!pageDeroulement) return; // sécurité
+
+  // Zone où on affiche les lignes auto
+  let zone = document.getElementById('deroulementAuto');
+  if (!zone) {
+    zone = document.createElement('div');
+    zone.id = 'deroulementAuto';
+    zone.style.marginTop = '10px';
+    pageDeroulement.appendChild(zone);
+  }
+
+  const heure = fiche.heure || "";
+  const nat = fiche.nationalite || "NC";
+  const suite = fiche.suitesDonnees || "NC";
+
+  let label;
+  if (fiche.categorie === "ESI") {
+    compteurEsi++;
+    label = `ESI ${compteurEsi}`;
+  } else if (fiche.categorie === "PASSEUR") {
+    compteurPasseur++;
+    label = `PASSEUR ${compteurPasseur}`;
+  } else {
+    return;
+  }
+
+  const ligne = `${heure} – ${label} – Nationalité : ${nat} – Suite donnée : ${suite} sur ordre OPJ PAF.`;
+
+  const divLigne = document.createElement('div');
+  divLigne.textContent = ligne;
+  zone.appendChild(divLigne);
+}
+
 document.getElementById('ficheForm').addEventListener('submit', function(e){
     e.preventDefault();
     const pieces = Array.from(document.querySelectorAll('input[name="piece"]:checked')).map(cb => cb.value);
@@ -2308,7 +2350,12 @@ suitesDonnees: document.getElementById('suitesDonnees').value,
     const fiches = JSON.parse(localStorage.getItem('fichesBorderforce') || '[]');
     fiches.push(fiche);
     localStorage.setItem('fichesBorderforce', JSON.stringify(fiches));
-    this.reset();
+      
+	  // 🔹 NOUVELLE LIGNE : envoie les infos vers la section ESI / Passeur
+    remplirDepuisFicheDansEsiOuPasseur(fiche);
+  ajouterLigneDeroulementDepuisFiche(fiche);
+
+  this.reset();
     setCurrentDateTime();
     afficherHistorique();
 });
@@ -2400,6 +2447,77 @@ document.getElementById('effacerFiches').addEventListener('click', function() {
 });
 
 afficherHistorique();
+
+// 🔹 Envoie les infos utiles de la fiche vers la section ESI ou Passeur
+function remplirDepuisFicheDansEsiOuPasseur(fiche) {
+  // On ne récupère QUE ce que tu as demandé :
+  // sexe, date de naissance, âge num, nationalité, lieu, heure, suites données
+
+  if (fiche.categorie === 'ESI') {
+    // Sexe : on convertit Masculin/Féminin → Homme/Femme
+    const esiSexe = document.getElementById('esiSexe');
+    if (esiSexe) {
+      if (fiche.sexe === 'Masculin') esiSexe.value = 'Homme';
+      else if (fiche.sexe === 'Féminin') esiSexe.value = 'Femme';
+      else esiSexe.value = '';
+    }
+
+    const esiDob = document.getElementById('esiDob');
+    if (esiDob) esiDob.value = fiche.dateNaissance || '';
+
+    const esiAgeNum = document.getElementById('esiAgeNum');
+    if (esiAgeNum) esiAgeNum.value = fiche.age || '';
+
+    const esiNat = document.getElementById('esiNationalite');
+    if (esiNat) esiNat.value = fiche.nationalite || '';
+
+    const esiLieu = document.getElementById('esiLieu');
+    if (esiLieu) esiLieu.value = fiche.lieuInterpellation || '';
+
+    const esiHeure = document.getElementById('esiHeure');
+    if (esiHeure) esiHeure.value = fiche.heure || '';
+
+    const esiSuites = document.getElementById('esiSuites');
+    if (esiSuites) esiSuites.value = fiche.suitesDonnees || '';
+
+    // On laisse ta fonction gérer "Majeur(e)/Mineur(e)" si elle existe
+    if (typeof majEsiStatut === 'function') {
+      majEsiStatut();
+    }
+  }
+
+  if (fiche.categorie === 'PASSEUR') {
+    const pSexe = document.getElementById('passeurSexe');
+    if (pSexe) {
+      if (fiche.sexe === 'Masculin') pSexe.value = 'Homme';
+      else if (fiche.sexe === 'Féminin') pSexe.value = 'Femme';
+      else pSexe.value = '';
+    }
+
+    const pDob = document.getElementById('passeurDob');
+    if (pDob) pDob.value = fiche.dateNaissance || '';
+
+    const pAgeNum = document.getElementById('passeurAgeNum');
+    if (pAgeNum) pAgeNum.value = fiche.age || '';
+
+    const pNat = document.getElementById('passeurNationalite');
+    if (pNat) pNat.value = fiche.nationalite || '';
+
+    const pLieu = document.getElementById('passeurLieu');
+    if (pLieu) pLieu.value = fiche.lieuInterpellation || '';
+
+    const pHeure = document.getElementById('passeurHeure');
+    if (pHeure) pHeure.value = fiche.heure || '';
+
+    const pSuites = document.getElementById('passeurSuites');
+    if (pSuites) pSuites.value = fiche.suitesDonnees || '';
+
+    if (typeof majPasseurStatut === 'function') {
+      majPasseurStatut();
+    }
+  }
+}
+
 
 /* ---------- BLOC JS COMPLET POUR ESI+VISA (195 pays) ---------- */
 (function(){
