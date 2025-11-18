@@ -2761,6 +2761,12 @@ function resetData() {
       }
     }
 
+// 🔥🔥🔥 AJOUT À FAIRE : effacer les fiches ESI / PASSEUR 🔥🔥🔥
+    localStorage.removeItem('fichesBorderforce');     // toutes les fiches identité enregistrées
+    localStorage.removeItem('borderforce_esi');       // si tu stockes les ESI ailleurs
+    localStorage.removeItem('borderforce_passeurs');  // si tu stockes les passeurs ailleurs
+    // 🔥🔥🔥 FIN DE L’AJOUT 🔥🔥🔥
+
     // Nouveau state réinitialisé
     const newState = {
       site: '',   // <= le site est vidé
