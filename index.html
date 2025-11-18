@@ -1082,7 +1082,7 @@ html, body {
 </section>
  
 <textarea id="deroulement" oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px';" placeholder="Déroulement détaillé..."></textarea>
-<div id="deroulementAuto" class="small-note" style="margin-top:10px;"></div>
+
 
 </div>
 </div>
@@ -2279,19 +2279,10 @@ function formatDateIntervention(dateStr) {
 let compteurEsi = 0;
 let compteurPasseur = 0;
 
-// Ajoute une ligne dans le déroulement de la mission (dans #deroulementPage)
+// Ajoute une ligne directement dans le champ "Texte libre" de déroulement
 function ajouterLigneDeroulementDepuisFiche(fiche) {
-  const pageDeroulement = document.getElementById('deroulementPage');
-  if (!pageDeroulement) return; // sécurité
-
-  // Zone où on affiche les lignes auto
-  let zone = document.getElementById('deroulementAuto');
-  if (!zone) {
-    zone = document.createElement('div');
-    zone.id = 'deroulementAuto';
-    zone.style.marginTop = '10px';
-    pageDeroulement.appendChild(zone);
-  }
+  const champTexteLibre = document.getElementById('texte_libre');
+  if (!champTexteLibre) return; // sécurité
 
   const heure = fiche.heure || "";
   const nat = fiche.nationalite || "NC";
@@ -2308,11 +2299,14 @@ function ajouterLigneDeroulementDepuisFiche(fiche) {
     return;
   }
 
-  const ligne = `${heure} – ${label} – Nationalité : ${nat} – Suite donnée : ${suite} sur ordre OPJ PAF.`;
+  // Met directement le texte dans le champ
+  champTexteLibre.value =
+    `${heure ? heure + " – " : ""}${label} – Nationalité : ${nat} – Suite donnée : ${suite} sur ordre OPJ PAF.`;
 
-  const divLigne = document.createElement('div');
-  divLigne.textContent = ligne;
-  zone.appendChild(divLigne);
+  // Facultatif : rafraîchir si nécessaire
+  if (typeof majAffichageComptage === "function") {
+    majAffichageComptage();
+  }
 }
 
 document.getElementById('ficheForm').addEventListener('submit', function(e){
