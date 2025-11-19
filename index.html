@@ -1651,6 +1651,7 @@ function addManualCf(type){
           document.getElementById('esiLieu').value = esi.lieu;
           document.getElementById('esiHeure').value = esi.heure;
           document.getElementById('esiSuites').value = esi.suites;
+		   document.getElementById('esiDob').value = esi.dob || "";
           state.editingEsiIndex = i;
           document.getElementById('addEsiBtn').textContent = "Enregistrer";
         };
@@ -1663,6 +1664,7 @@ function addManualCf(type){
           if(confirm("Supprimer cet ESI ?")) {
             state.esiList.splice(i,1);
             renderEsiList();
+			rebuildDeroulementAuto();
             debounceSave();
           }
         };
@@ -1676,42 +1678,81 @@ function addManualCf(type){
       container.appendChild(ul);
     }
 
-    function addEsi() {
-      const heure = document.getElementById('esiHeure').value.trim();
-      const age = document.getElementById('esiAge').value;
-      const sexe = document.getElementById('esiSexe').value;
-      const ageNum = document.getElementById('esiAgeNum').value.trim();
-      const nationalite = document.getElementById('esiNationalite').value.trim();
-      const lieu = document.getElementById('esiLieu').value.trim();
-      const suites = document.getElementById('esiSuites').value.trim();
-      if(!age || !sexe || !ageNum || !nationalite || !lieu || !suites) {
-        alert('Merci de remplir tous les champs ESI.');
-        return;
-      }
+   function addEsi() {
+  const heure = document.getElementById('esiHeure').value.trim();
+  const age = document.getElementById('esiAge').value;
+  const sexe = document.getElementById('esiSexe').value;
+  const ageNum = document.getElementById('esiAgeNum').value.trim();
+  const nationalite = document.getElementById('esiNationalite').value.trim();
+  const lieu = document.getElementById('esiLieu').value.trim();
+  const suites = document.getElementById('esiSuites').value.trim();
+  const dob = document.getElementById('esiDob').value.trim(); // ✅ date de naissance
 
-      if(state.editingEsiIndex !== null && state.editingEsiIndex !== undefined) {
-        state.esiList[state.editingEsiIndex] = {age,sexe,ageNum,nationalite,lieu,heure,suites};
-        state.editingEsiIndex = null;
-        document.getElementById('addEsiBtn').textContent = "Ajouter ESI";
-      } else {
-        state.esiList.push({age,sexe,ageNum,nationalite,lieu,heure,suites});
-      }
+  if (!age || !sexe || !ageNum || !nationalite || !lieu || !suites) {
+    alert('Merci de remplir tous les champs ESI.');
+    return;
+  }
 
-      document.getElementById('esiAge').value = '';
-      document.getElementById('esiSexe').value = '';
-      document.getElementById('esiAgeNum').value = '';
-      document.getElementById('esiNationalite').value = '';
-      document.getElementById('esiLieu').value = '';
-      document.getElementById('esiHeure').value = '';
-      document.getElementById('esiSuites').value = '';
-      renderEsiList();
-      debounceSave();
-    }
+  // ✅ objet ESI complet (avec DOB)
+  const esiData = {
+    age,
+    sexe,
+    ageNum,
+    nationalite,
+    lieu,
+    heure,
+    suites,
+    dob
+  };
+
+  if (state.editingEsiIndex !== null && state.editingEsiIndex !== undefined) {
+    // 🔁 MODE MODIFICATION : on met à jour la liste + le déroulement
+    const idx = state.editingEsiIndex;
+    state.esiList[idx] = esiData;
+    state.editingEsiIndex = null;
+    document.getElementById('addEsiBtn').textContent = "Ajouter ESI";
+
+    // 🔄 met à jour la ligne correspondante dans le déroulement
+    majLigneDeroulementPourEsi(idx);
+  } else {
+    // ➕ MODE AJOUT : on ajoute à la liste
+    state.esiList.push(esiData);
+
+    // 🔹 Ajout automatique dans le déroulement (option B)
+    const der = document.getElementById('deroulement');
+    const num = state.esiList.length; // ESI n°
+    const ligne = `${heure ? heure + " — " : ""}ESI ${num} — ${sexe} — ${ageNum} ans — ${nationalite} — Ordre OPJ PAF : ${suites}`;
+
+    der.value = der.value.trim()
+      ? der.value + "\n" + ligne
+      : ligne;
+
+    // pour déclencher la sauvegarde/auto-resize
+    der.dispatchEvent(new Event('input'));
+  }
+
+  // ✅ on vide tous les champs
+  document.getElementById('esiAge').value = '';
+  document.getElementById('esiSexe').value = '';
+  document.getElementById('esiAgeNum').value = '';
+  document.getElementById('esiNationalite').value = '';
+  document.getElementById('esiLieu').value = '';
+  document.getElementById('esiHeure').value = '';
+  document.getElementById('esiSuites').value = '';
+  document.getElementById('esiDob').value = '';
+
+  renderEsiList();
+  debounceSave();
+}
+
+
+
 
     function delEsi() {
       if(state.esiList && state.esiList.length > 0) {
         state.esiList.pop();
         renderEsiList();
+		rebuildDeroulementAuto();
         debounceSave();
       }
     }
@@ -1755,7 +1796,8 @@ function addManualCf(type){
           document.getElementById('passeurLieu').value = passeur.lieu;
           document.getElementById('passeurHeure').value = passeur.heure;
           document.getElementById('passeurSuites').value = passeur.suites;
-          state.editingPasseurIndex = i;
+          document.getElementById('passeurDob').value = passeur.dob || "";
+		  state.editingPasseurIndex = i;
           document.getElementById('addPasseurBtn').textContent = "Enregistrer";
         };
 
@@ -1767,6 +1809,7 @@ function addManualCf(type){
           if(confirm("Supprimer ce passeur ?")) {
             state.passeurList.splice(i,1);
             renderPasseurList();
+			rebuildDeroulementAuto();
             debounceSave();
           }
         };
@@ -1780,45 +1823,216 @@ function addManualCf(type){
       container.appendChild(ul);
     }
 
-    function addPasseur() {
-      const heure = document.getElementById('passeurHeure').value.trim();
-      const age = document.getElementById('passeurAge').value;
-      const sexe = document.getElementById('passeurSexe').value;
-      const ageNum = document.getElementById('passeurAgeNum').value.trim();
-      const nationalite = document.getElementById('passeurNationalite').value.trim();
-      const lieu = document.getElementById('passeurLieu').value.trim();
-      const suites = document.getElementById('passeurSuites').value.trim();
-      if(!age || !sexe || !ageNum || !nationalite || !lieu || !suites) {
-        alert('Merci de remplir tous les champs Passeur.');
-        return;
-      }
+  function addPasseur() {
+  const heure = document.getElementById('passeurHeure').value.trim();
+  const age = document.getElementById('passeurAge').value;
+  const sexe = document.getElementById('passeurSexe').value;
+  const ageNum = document.getElementById('passeurAgeNum').value.trim();
+  const nationalite = document.getElementById('passeurNationalite').value.trim();
+  const lieu = document.getElementById('passeurLieu').value.trim();
+  const suites = document.getElementById('passeurSuites').value.trim();
+  const dob = document.getElementById('passeurDob').value.trim(); // ✅ date de naissance
 
-      if(state.editingPasseurIndex !== null && state.editingPasseurIndex !== undefined) {
-        state.passeurList[state.editingPasseurIndex] = {age,sexe,ageNum,nationalite,lieu,heure,suites};
-        state.editingPasseurIndex = null;
-        document.getElementById('addPasseurBtn').textContent = "Ajouter Passeur";
-      } else {
-        state.passeurList.push({age,sexe,ageNum,nationalite,lieu,heure,suites});
-      }
+  if (!age || !sexe || !ageNum || !nationalite || !lieu || !suites) {
+    alert('Merci de remplir tous les champs Passeur.');
+    return;
+  }
 
-      document.getElementById('passeurAge').value = '';
-      document.getElementById('passeurSexe').value = '';
-      document.getElementById('passeurAgeNum').value = '';
-      document.getElementById('passeurNationalite').value = '';
-      document.getElementById('passeurLieu').value = '';
-      document.getElementById('passeurHeure').value = '';
-      document.getElementById('passeurSuites').value = '';
-      renderPasseurList();
-      debounceSave();
+  // ✅ objet Passeur complet
+  const passeurData = {
+    age,
+    sexe,
+    ageNum,
+    nationalite,
+    lieu,
+    heure,
+    suites,
+    dob
+  };
+
+  if (state.editingPasseurIndex !== null && state.editingPasseurIndex !== undefined) {
+    // 🔁 MODE MODIFICATION : on met à jour la liste + le déroulement
+    const idx = state.editingPasseurIndex;
+    state.passeurList[idx] = passeurData;
+    state.editingPasseurIndex = null;
+    document.getElementById('addPasseurBtn').textContent = "Ajouter Passeur";
+
+    // 🔄 met à jour la ligne correspondante dans le déroulement
+    majLigneDeroulementPourPasseur(idx);
+  } else {
+    // ➕ MODE AJOUT : on ajoute à la liste
+    state.passeurList.push(passeurData);
+
+    // 🔹 Ajout automatique dans le déroulement (option B)
+    const der = document.getElementById('deroulement');
+    const num = state.passeurList.length; // PASSEUR n°
+    const ligne = `${heure ? heure + " — " : ""}PASSEUR ${num} — ${sexe} — ${ageNum} ans — ${nationalite} — Ordre OPJ PAF : ${suites}`;
+
+    der.value = der.value.trim()
+      ? der.value + "\n" + ligne
+      : ligne;
+
+    der.dispatchEvent(new Event('input'));
+  }
+
+  // on vide les champs
+  document.getElementById('passeurAge').value = '';
+  document.getElementById('passeurSexe').value = '';
+  document.getElementById('passeurAgeNum').value = '';
+  document.getElementById('passeurNationalite').value = '';
+  document.getElementById('passeurLieu').value = '';
+  document.getElementById('passeurHeure').value = '';
+  document.getElementById('passeurSuites').value = '';
+  document.getElementById('passeurDob').value = '';
+
+  renderPasseurList();
+  debounceSave();
+}
+
+ function majLigneDeroulementPourEsi(index) {
+  const der = document.getElementById('deroulement');
+  if (!der) return;
+
+  const esi = state.esiList[index];
+  if (!esi) return;
+
+  const num = index + 1;
+  const heure = esi.heure || "";
+  const sexe = esi.sexe || "";
+  const ageNum = esi.ageNum || "";
+  const nat = esi.nationalite || "";
+  const suites = esi.suites || "";
+
+  const nouvelleLigne =
+    `${heure ? heure + " — " : ""}ESI ${num} — ${sexe} — ${ageNum} ans — ${nat} — Ordre OPJ PAF : ${suites}`;
+
+  const lignes = der.value.split('\n');
+  let trouve = false;
+
+  for (let i = 0; i < lignes.length; i++) {
+    if (lignes[i].includes(`ESI ${num} —`)) {
+      lignes[i] = nouvelleLigne;
+      trouve = true;
+      break;
     }
+  }
+
+  if (!trouve) {
+    lignes.push(nouvelleLigne);
+  }
+
+  der.value = lignes.join('\n');
+  der.dispatchEvent(new Event('input'));
+}
+
 
     function delPasseur() {
       if(state.passeurList && state.passeurList.length > 0) {
         state.passeurList.pop();
         renderPasseurList();
+		 rebuildDeroulementAuto();
         debounceSave();
       }
     }
+
+function majLigneDeroulementPourPasseur(index) {
+  const der = document.getElementById('deroulement');
+  if (!der) return;
+
+  const passeur = state.passeurList[index];
+  if (!passeur) return;
+
+  const num = index + 1;
+  const heure = passeur.heure || "";
+  const sexe = passeur.sexe || "";
+  const ageNum = passeur.ageNum || "";
+  const nat = passeur.nationalite || "";
+  const suites = passeur.suites || "";
+
+  const nouvelleLigne =
+    `${heure ? heure + " — " : ""}PASSEUR ${num} — ${sexe} — ${ageNum} ans — ${nat} — Ordre OPJ PAF : ${suites}`;
+
+  const lignes = der.value.split('\n');
+  let trouve = false;
+
+  for (let i = 0; i < lignes.length; i++) {
+    if (lignes[i].includes(`PASSEUR ${num} —`)) {
+      lignes[i] = nouvelleLigne;
+      trouve = true;
+      break;
+    }
+  }
+
+  if (!trouve) {
+    lignes.push(nouvelleLigne);
+  }
+
+  der.value = lignes.join('\n');
+  der.dispatchEvent(new Event('input'));
+}
+
+function rebuildDeroulementAuto() {
+  const der = document.getElementById('deroulement');
+  if (!der) return;
+
+  const lignesExistantes = (der.value || '').split('\n');
+
+  // On garde les lignes "manuelles" (qui ne sont pas les lignes auto ESI/PASSEUR)
+  const lignesManuelles = lignesExistantes.filter(l => {
+    const t = l.trim();
+    if (!t) return false;
+    // on considère auto si ça commence par "ESI X —" ou "PASSEUR X —" (avec éventuellement l'heure avant)
+    return !/^(\d{1,2}:\d{2}\s*—\s*)?(ESI|PASSEUR)\s+\d+\s*—/.test(t);
+  });
+
+  const lignesAuto = [];
+
+  // 🔹 Reconstruire toutes les lignes ESI
+  if (Array.isArray(state.esiList)) {
+    state.esiList.forEach((esi, idx) => {
+      const num   = idx + 1;
+      const heure = esi.heure || "";
+      const sexe  = esi.sexe || "";
+      const age   = esi.ageNum ? esi.ageNum + " ans" : "";
+      const nat   = esi.nationalite || "";
+      const suites = esi.suites || "";
+      const prefix = heure ? heure + " — " : "";
+
+      lignesAuto.push(
+        `${prefix}ESI ${num} — ${sexe} — ${age} — ${nat} — Ordre OPJ PAF : ${suites}`
+      );
+    });
+  }
+
+  // 🔹 Reconstruire toutes les lignes PASSEUR
+  if (Array.isArray(state.passeurList)) {
+    state.passeurList.forEach((passeur, idx) => {
+      const num   = idx + 1;
+      const heure = passeur.heure || "";
+      const sexe  = passeur.sexe || "";
+      const age   = passeur.ageNum ? passeur.ageNum + " ans" : "";
+      const nat   = passeur.nationalite || "";
+      const suites = passeur.suites || "";
+      const prefix = heure ? heure + " — " : "";
+
+      lignesAuto.push(
+        `${prefix}PASSEUR ${num} — ${sexe} — ${age} — ${nat} — Ordre OPJ PAF : ${suites}`
+      );
+    });
+  }
+
+  const final = [...lignesManuelles];
+
+  if (lignesAuto.length) {
+    if (final.length) final.push(''); // petite ligne vide de séparation
+    final.push(...lignesAuto);
+  }
+
+  der.value = final.join('\n');
+  der.dispatchEvent(new Event('input'));
+}
+
+
 
     // Compte rendu generator (utilise state)
     function generateCompteRendu() {
@@ -2320,7 +2534,7 @@ suitesDonnees: document.getElementById('suitesDonnees').value,
       
 	  // 🔹 NOUVELLE LIGNE : envoie les infos vers la section ESI / Passeur
     remplirDepuisFicheDansEsiOuPasseur(fiche);
-  ajouterLigneDeroulementDepuisFiche(fiche);
+  
 
   this.reset();
     setCurrentDateTime();
@@ -3102,6 +3316,7 @@ function ajouterDeroulementFlex(){
 
   majAffichageComptage();
 }	
+
 </script>
 </body>
 </html>
