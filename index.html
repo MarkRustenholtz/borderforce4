@@ -3316,6 +3316,98 @@ function ajouterDeroulementFlex(){
 
   majAffichageComptage();
 }	
+// === TRI AUTO INSTANTANÉ DU DÉROULEMENT (ajouté, ne remplace rien) ===
+
+// petit garde-fou pour éviter une boucle infinie d'événements input
+let BF_IS_SORTING_DEROULEMENT = false;
+
+// Convertit "HH:MM" ou "HHhMM" en minutes depuis minuit
+function bf_parseHeureToMinutes(hstr) {
+  if (!hstr) return null;
+  const m = String(hstr).trim().match(/^(\d{1,2})\s*[:hH]\s*(\d{2})/);
+  if (!m) return null;
+  const h = parseInt(m[1], 10);
+  const min = parseInt(m[2], 10);
+  if (isNaN(h) || isNaN(min)) return null;
+  return h * 60 + min;
+}
+
+// Récupère l'heure au début d'une ligne du déroulement
+function bf_minutesFromLine(line) {
+  if (!line) return null;
+  const m = String(line).trim().match(/^(\d{1,2})\s*[:hH]\s*(\d{2})/);
+  if (!m) return null;
+  const h = parseInt(m[1], 10);
+  const min = parseInt(m[2], 10);
+  if (isNaN(h) || isNaN(min)) return null;
+  return h * 60 + min;
+}
+
+// Trie le textarea #deroulement en tenant compte d'une vacation de nuit (22h → 7h)
+function bf_trierDeroulement() {
+  const der = document.getElementById('deroulement');
+  if (!der) return;
+
+  let lignes = der.value
+    .split('\n')
+    .map(l => l.trim())
+    .filter(l => l !== '');
+
+  // On lit l'heure de début / fin directement dans les champs de l'appli
+  const debutStr = document.getElementById('heureDebutInput')
+    ? document.getElementById('heureDebutInput').value
+    : '';
+  const finStr = document.getElementById('heureFinInput')
+    ? document.getElementById('heureFinInput').value
+    : '';
+
+  const debutMinutes = bf_parseHeureToMinutes(debutStr);
+  const finMinutes   = bf_parseHeureToMinutes(finStr);
+  const traverseMinuit =
+    (debutMinutes !== null && finMinutes !== null && finMinutes < debutMinutes);
+
+  lignes.sort((a, b) => {
+    let ta = bf_minutesFromLine(a);
+    let tb = bf_minutesFromLine(b);
+
+    // lignes sans heure → en bas
+    if (ta === null && tb === null) return 0;
+    if (ta === null) return 1;
+    if (tb === null) return -1;
+
+    // Si la mission traverse minuit, les heures < heureDébut sont "lendemain"
+    if (traverseMinuit && debutMinutes !== null) {
+      if (ta < debutMinutes) ta += 24 * 60;
+      if (tb < debutMinutes) tb += 24 * 60;
+    }
+
+    return ta - tb;
+  });
+
+  der.value = lignes.join('\n');
+}
+
+// On branche le tri sur chaque modif du textarea déroulement
+document.addEventListener('DOMContentLoaded', () => {
+  const der = document.getElementById('deroulement');
+  if (!der) return;
+
+  der.addEventListener('input', () => {
+    // éviter la boucle quand on redéclenche nous-mêmes un 'input'
+    if (BF_IS_SORTING_DEROULEMENT) return;
+    BF_IS_SORTING_DEROULEMENT = true;
+
+    // 1) on trie le texte affiché
+    bf_trierDeroulement();
+
+    // 2) on redéclenche 'input' pour que ton onTextAreaChange()
+    //    mette à jour state.deroulement + localStorage
+    der.dispatchEvent(new Event('input'));
+
+    BF_IS_SORTING_DEROULEMENT = false;
+  });
+});
+
 
 </script>
 </body>
