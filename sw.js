@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cr-gendborderforce-cache-v17'; // ⚠️ change le numéro à chaque mise à jour
+const CACHE_NAME = 'borderforce-gend-cache-v18'; // ⚠️ change le numéro à chaque mise à jour
 const urlsToCache = [
   './',
   './index.html',
