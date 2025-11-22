@@ -3316,6 +3316,7 @@ function ajouterDeroulementFlex(){
 
   majAffichageComptage();
 }	
+
 // === TRI AUTO INSTANTANÉ DU DÉROULEMENT (ajouté, ne remplace rien) ===
 
 // petit garde-fou pour éviter une boucle infinie d'événements input
@@ -3343,15 +3344,22 @@ function bf_minutesFromLine(line) {
   return h * 60 + min;
 }
 
-// Trie le textarea #deroulement en tenant compte d'une vacation de nuit (22h → 7h)
+// Trie le textarea #deroulement en tenant compte :
+// - des horaires
+// - d'une vacation de nuit (22h → 7h) avec marge de 1h avant le début
+// - des lignes SANS heure qui restent collées à la ligne d'heure précédente
 function bf_trierDeroulement() {
   const der = document.getElementById('deroulement');
   if (!der) return;
 
-  let lignes = der.value
+  const lignesBrutes = der.value
     .split('\n')
     .map(l => l.trim())
     .filter(l => l !== '');
+
+  if (!lignesBrutes.length) {
+    return;
+  }
 
   // On lit l'heure de début / fin directement dans les champs de l'appli
   const debutStr = document.getElementById('heureDebutInput')
@@ -3366,25 +3374,84 @@ function bf_trierDeroulement() {
   const traverseMinuit =
     (debutMinutes !== null && finMinutes !== null && finMinutes < debutMinutes);
 
-  lignes.sort((a, b) => {
-    let ta = bf_minutesFromLine(a);
-    let tb = bf_minutesFromLine(b);
+  // 🔹 On découpe en groupes :
+  // 1 groupe = 1 ligne avec heure + toutes les lignes SANS heure qui suivent
+  const groups = [];
+  let currentGroup = null;
+  let index = 0;
 
-    // lignes sans heure → en bas
-    if (ta === null && tb === null) return 0;
-    if (ta === null) return 1;
-    if (tb === null) return -1;
+  lignesBrutes.forEach(line => {
+    const minutes = bf_minutesFromLine(line);
 
-    // Si la mission traverse minuit, les heures < heureDébut sont "lendemain"
-    if (traverseMinuit && debutMinutes !== null) {
-      if (ta < debutMinutes) ta += 24 * 60;
-      if (tb < debutMinutes) tb += 24 * 60;
+    if (minutes !== null) {
+      // nouvelle ligne avec heure → nouveau groupe
+      currentGroup = {
+        lines: [line],
+        baseMinutes: minutes,
+        sortMinutes: null,
+        originalIndex: index++
+      };
+      groups.push(currentGroup);
+    } else {
+      // ligne SANS heure
+      if (!currentGroup) {
+        // aucune heure avant → groupe "sans heure au début"
+        currentGroup = {
+          lines: [line],
+          baseMinutes: null,
+          sortMinutes: null,
+          originalIndex: index++
+        };
+        groups.push(currentGroup);
+      } else {
+        // on l'attache au groupe en cours
+        currentGroup.lines.push(line);
+      }
     }
-
-    return ta - tb;
   });
 
-  der.value = lignes.join('\n');
+  const MARGE = 60; // 1h de marge avant l'heure de début
+
+  // 🔹 On calcule la minute de tri pour chaque groupe
+  groups.forEach(g => {
+    if (g.baseMinutes === null) {
+      g.sortMinutes = null; // groupe sans heure → ordre d'origine
+      return;
+    }
+
+    let key = g.baseMinutes;
+
+    if (traverseMinuit && debutMinutes !== null) {
+      const seuil = Math.max(0, debutMinutes - MARGE);
+      if (key < seuil) key += 24 * 60;
+    }
+
+    g.sortMinutes = key;
+  });
+
+  // 🔹 Tri des groupes par heure, en gardant l'ordre d'origine en cas d'égalité
+  groups.sort((ga, gb) => {
+    const a = ga.sortMinutes;
+    const b = gb.sortMinutes;
+
+    if (a === null && b === null) {
+      // deux groupes sans heure → on respecte l'ordre de création
+      return ga.originalIndex - gb.originalIndex;
+    }
+    if (a === null) return -1; // groupes sans heure avant les autres
+    if (b === null) return 1;
+    if (a !== b) return a - b;
+    // même heure → on garde l'ordre d'origine
+    return ga.originalIndex - gb.originalIndex;
+  });
+
+  // 🔹 Reconstruction des lignes dans le bon ordre
+  const nouvellesLignes = [];
+  groups.forEach(g => {
+    g.lines.forEach(l => nouvellesLignes.push(l));
+  });
+
+  der.value = nouvellesLignes.join('\n');
 }
 
 // On branche le tri sur chaque modif du textarea déroulement
@@ -3407,6 +3474,7 @@ document.addEventListener('DOMContentLoaded', () => {
     BF_IS_SORTING_DEROULEMENT = false;
   });
 });
+
 
 
 </script>
