@@ -1022,16 +1022,7 @@ html, body {
     <label style="display:block;margin-top:6px">Heure</label>
     <input type="time" id="heure_action" />
 
-    <label style="display:block;margin-top:6px">ESI (optionnel)</label>
-    <select id="esi_select">
-      <option value="">— Aucun —</option>
-      <option>ESI 1</option><option>ESI 2</option><option>ESI 3</option>
-      <option>ESI 4</option><option>ESI 5</option><option>ESI 6</option>
-      <option>ESI 7</option><option>ESI 8</option><option>ESI 9</option>
-      <option>ESI 10</option>
-    </select>
-
-    <label style="display:block;margin-top:6px">Action prédéfinie (optionnel)</label>
+    <label style="display:block;margin-top:6px">Action prédéfinie</label>
     <select id="type_action" onchange="majAffichageComptage()">
       <option value="">— Sélectionner —</option>
 
@@ -1040,26 +1031,28 @@ html, body {
         <option>Arrivée à la caserne Ausseur</option>
         <option>Départ en mission</option>
         <option>Retour de mission</option>
-        <option>Arrivés sur site d'emploi, début de mission</option>
-        <option>Départ du site d'emploi, fin de mission</option>
+        <option>Arrivée sur site d'emploi — Début de mission</option>
+        <option>Départ du site d'emploi — Fin de mission</option>
         <option>Contrôle routier</option>
         <option>Train</option>
         <option>Bus</option>
       </optgroup>
-
-      <optgroup label="Prise en compte et restitution">
-        <option>Prise en compte armement, matériel et véhicule</option>
-       <option>Restitution armement, matériel et véhicule</option>
-      </optgroup>
-
-      <optgroup label="Service">
-        
-        <option>Début de service</option>
-        <option>Fin de service</option>
-      </optgroup>
     </select>
-
-    <label style="display:block;margin-top:6px">Texte libre (optionnel)</label>
+	
+ <!-- 🔻 NOUVEAU : infos supplémentaires (à la place de ESI 1,2,3…) -->
+    <label style="display:block;margin-top:6px">Infos supplémentaires</label>
+    <select id="esi_select">
+      <option value="">— Aucune —</option>
+      <option>Début de mission</option>
+      <option>Fin de mission</option>
+      <option>Début de service</option>
+      <option>Fin de service</option>
+      <option>Prise en compte armement, matériels et véhicule(s)</option>
+      <option>Restitution armement, matériels et véhicule(s)</option>
+      <option>Retour domiciles respectifs</option>
+      <option>FINEX</option>
+    </select>
+    <label style="display:block;margin-top:6px">Texte libre</label>
     <input id="texte_libre" placeholder="Ex. Bus / Patrouille pédestre…" oninput="majAffichageComptage()" />
 
     <div id="bloc_comptage" style="display:none;margin-top:8px">
@@ -1721,7 +1714,7 @@ function addManualCf(type){
     // 🔹 Ajout automatique dans le déroulement (option B)
     const der = document.getElementById('deroulement');
     const num = state.esiList.length; // ESI n°
-    const ligne = `${heure ? heure + " — " : ""}ESI ${num} — ${sexe} — ${ageNum} ans — ${nationalite} — Ordre OPJ PAF : ${suites}`;
+    const ligne = `${heure ? heure + " — " : ""}ESI ${num} — ${sexe} — ${ageNum} ans — Nationalité: ${nationalite} — Ordre OPJ PAF : ${suites}`;
 
     der.value = der.value.trim()
       ? der.value + "\n" + ligne
@@ -1866,7 +1859,7 @@ function addManualCf(type){
     // 🔹 Ajout automatique dans le déroulement (option B)
     const der = document.getElementById('deroulement');
     const num = state.passeurList.length; // PASSEUR n°
-    const ligne = `${heure ? heure + " — " : ""}PASSEUR ${num} — ${sexe} — ${ageNum} ans — ${nationalite} — Ordre OPJ PAF : ${suites}`;
+    const ligne = `${heure ? heure + " — " : ""}PASSEUR ${num} — ${sexe} — ${ageNum} ans — Nationalité: ${nationalite} — Ordre OPJ PAF : ${suites}`;
 
     der.value = der.value.trim()
       ? der.value + "\n" + ligne
@@ -3287,14 +3280,14 @@ function ajouterDeroulementFlex(){
   if(!zone){ alert("⚠️ Zone 'Déroulement' introuvable."); return; }
 
   const heure = document.getElementById("heure_action").value;
-  const esi   = (document.getElementById("esi_select").value || "").trim();
   const act   = (document.getElementById("type_action").value || "").trim();
+  const infosupp = (document.getElementById("esi_select").value || "").trim();
   const libre = (document.getElementById("texte_libre").value || "").trim();
   const nbCtrl = document.getElementById("nb_controles").value;
   const nbDesc = document.getElementById("nb_descendus").value;
 
   const hStr = formatHeureHhmm(heure);
-  const corps = triJoin([esi, act, libre]);
+  const corps = triJoin([act, infosupp , libre]);
   const suffix = buildSuffixComptage(nbCtrl, nbDesc);
 
   if(!hStr && !corps && !suffix){
@@ -3308,8 +3301,8 @@ function ajouterDeroulementFlex(){
   zone.dispatchEvent(new Event('input')); // garde ton auto-redimensionnement
 
   document.getElementById("heure_action").value = "";
-  document.getElementById("esi_select").value = "";
   document.getElementById("type_action").value = "";
+  document.getElementById("esi_select").value = "";
   document.getElementById("texte_libre").value = "";
   document.getElementById("nb_controles").value = "";
   document.getElementById("nb_descendus").value = "";
