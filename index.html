@@ -3447,24 +3447,34 @@ function bf_trierDeroulement() {
   der.value = nouvellesLignes.join('\n');
 }
 
-// On branche le tri sur chaque modif du textarea déroulement
+// On branche le tri sur les modifs du textarea déroulement (avec délai)
 document.addEventListener('DOMContentLoaded', () => {
   const der = document.getElementById('deroulement');
   if (!der) return;
 
+  let bf_triTimeout = null;
+
   der.addEventListener('input', () => {
-    // éviter la boucle quand on redéclenche nous-mêmes un 'input'
+    // si c'est nous qui sommes en train de trier, on ignore
     if (BF_IS_SORTING_DEROULEMENT) return;
-    BF_IS_SORTING_DEROULEMENT = true;
 
-    // 1) on trie le texte affiché
-    bf_trierDeroulement();
+    // on annule un éventuel tri déjà planifié
+    clearTimeout(bf_triTimeout);
 
-    // 2) on redéclenche 'input' pour que ton onTextAreaChange()
-    //    mette à jour state.deroulement + localStorage
-    der.dispatchEvent(new Event('input'));
+    // on lance le tri 1,5 seconde après la dernière frappe
+    bf_triTimeout = setTimeout(() => {
+      BF_IS_SORTING_DEROULEMENT = true;
 
-    BF_IS_SORTING_DEROULEMENT = false;
+      // 1) on trie le texte affiché
+      bf_trierDeroulement();
+
+      // 2) on force la sauvegarde/resize comme d'habitude
+      if (typeof onTextAreaChange === 'function') {
+        onTextAreaChange('deroulement');
+      }
+
+      BF_IS_SORTING_DEROULEMENT = false;
+    }, 1500); // ⏱️ 1500 ms = 1,5 s d'inactivité avant tri
   });
 });
 
