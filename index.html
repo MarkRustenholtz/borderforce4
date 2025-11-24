@@ -691,8 +691,16 @@ html, body {
     <div class="flex-row">
       <div style="flex:2;">
         <label>Caméra n° :
-          <input type="text" id="cameraNum" placeholder="Numéro caméra" />
-        </label>
+  <input
+    type="number"
+    id="cameraNum"
+    placeholder="Numéro caméra"
+    inputmode="numeric"
+    pattern="[0-9]*"
+    min="0"
+    step="1"
+  />
+</label>
       </div>
       <div style="flex:3;">
         <label>Porteur caméra (ESR) :
@@ -703,8 +711,16 @@ html, body {
     <div class="flex-row">
       <div style="flex:2;">
         <label>Tablette n° 1 :
-          <input type="text" id="tablette1Num" placeholder="N°(ex: 6)" />
-        </label>
+  <input
+    type="number"
+    id="tablette1Num"
+    placeholder="N°(ex: 6)"
+    inputmode="numeric"
+    pattern="[0-9]*"
+    min="0"
+    step="1"
+  />
+</label>
       </div>
       <div style="flex:3;">
         <label>Utilisateur tablette 1 (ESR) :
@@ -715,8 +731,16 @@ html, body {
     <div class="flex-row">
       <div style="flex:2;">
         <label>Tablette n° 2 (optionnel) :
-          <input type="text" id="tablette2Num" placeholder="N°(ex: 7)" />
-        </label>
+  <input
+    type="number"
+    id="tablette2Num"
+    placeholder="N°(ex: 7)"
+    inputmode="numeric"
+    pattern="[0-9]*"
+    min="0"
+    step="1"
+  />
+</label>
       </div>
       <div style="flex:3;">
         <label>Utilisateur tablette 2 (ESR) :
@@ -726,7 +750,13 @@ html, body {
     </div>
     <div style="margin-top:15px;">
       <label>Véhicule de service (immatriculation) :
-        <input type="text" id="vehiculeService" placeholder="Ex: AB-123-CD" />
+        <input
+  type="text"
+  id="vehiculeService"
+  placeholder="Ex: AB-123-CD"
+  style="text-transform: uppercase;"
+  oninput="this.value = this.value.toUpperCase();"
+/>
       </label>
     </div>
   </div>
