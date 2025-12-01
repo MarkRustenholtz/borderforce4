@@ -2241,14 +2241,22 @@ function autoResize(el) {
         const pLieu   = document.getElementById("passeurLieu");
         const pHeure  = document.getElementById("passeurHeure");
         const pSuites = document.getElementById("passeurSuites");
-
+	    const pAgeNum  = document.getElementById("passeurAgeNum");
+		
         if (pSexe)   pSexe.value   = sexeBrut;
         if (pDob)    pDob.value    = dateNaiss;
         if (pNat)    pNat.value    = nat;
         if (pLieu)   pLieu.value   = lieu;
         if (pHeure)  pHeure.value  = heure;
         if (pSuites) pSuites.value = suites;
-
+		
+		// 🧮 Calcul automatique de l'âge à partir de la date de naissance JJ/MM/AAAA
+  if (typeof calculateAge === "function" && dateNaiss && dateNaiss.length === 10 && pAgeNum) {
+    const age = calculateAge(dateNaiss);
+    if (age !== null) {
+      pAgeNum.value = age;
+    }
+  }
         // statut majeur/mineur si besoin
         if (typeof majPasseurStatut === "function") {
           majPasseurStatut();
