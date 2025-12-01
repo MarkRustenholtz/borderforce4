@@ -2202,9 +2202,9 @@ function autoResize(el) {
       isScanning = true;
     }
 
-    function onScanSuccess(decodedText) {
-      try {
-// 🧩 Décodage universel pour gérer accents, tirets, retours à la ligne
+   function onScanSuccess(decodedText) {
+  try {
+    // 🧩 Décodage universel pour gérer accents, tirets, retours à la ligne
     let texteDecode = decodedText;
     try {
       texteDecode = decodeURIComponent(decodedText);
@@ -2213,59 +2213,161 @@ function autoResize(el) {
     }
 
     console.log("QR décodé :", texteDecode);
-        const parsed = parseQrPayload(texteDecode);
-        if (!parsed) return;
-        const { nigend, counts, pretty } = parsed;
-        if (state.scannedNigends.includes(nigend)) {
-          logScan('NIGEND ' + nigend + ' déjà scanné, ignoré.');
-          return;
-        }
-        state.scannedNigends.push(nigend);
-		  
-        Object.keys(counts).forEach(k => {
-  // Initialise si besoin
-  if (!state.scansAgg[k]) state.scansAgg[k] = { v: 0, cv: 0, cf: 0 };
 
-  state.scansAgg[k].v  += counts[k].v;
-  state.scansAgg[k].cv += counts[k].cv;
-  state.scansAgg[k].cf += counts[k].cf;
-});
-        const dejaEsr = (state.esrList || []).some(e => e.nigend === parsed.nigend);
-        if (!dejaEsr && parsed.grade && parsed.nom && parsed.nigend && parsed.crt) {
-          state.esrList.push({
-            grade: parsed.grade,
-            nom: parsed.nom,
-            nigend: parsed.nigend,
-            crt: parsed.crt
-          });
-          renderEsrList();
-          populateEsrSelects();
-          debounceSave();
-        }
-        state.resumeEsr += `NIGEND ${nigend}\n${pretty}\n\n`;
-        updateResumeEsrUI();
-        debounceSave();
-        logScan('QR ajouté : ' + nigend);
+    /* 1️⃣ CAS FICHE IDENTITÉ (Compteur)
+       Format : ID;cat;heure;dateNaissance;lieu;suites;nat;sexe
+    */
+    if (texteDecode.startsWith("ID;")) {
+      const parts = texteDecode.split(";");
 
-        // pause 2s then resume
-        if (html5QrCode && isScanning) {
+      const catBrute = (parts[1] || "").trim().toUpperCase();
+      const heure       = (parts[2] || "").trim();
+      const dateNaiss   = (parts[3] || "").trim();
+      const lieu        = (parts[4] || "").trim();
+      const suites      = (parts[5] || "").trim();
+      const nat         = (parts[6] || "").trim();
+      let   sexeBrut    = (parts[7] || "").trim();
+
+      // Normalisation du sexe vers Homme/Femme
+      const s = sexeBrut.toLowerCase();
+      if (s.startsWith("m")) sexeBrut = "Homme";
+      else if (s.startsWith("f")) sexeBrut = "Femme";
+
+      if (catBrute === "PASSEUR") {
+        // 👉 Remplir directement la section PASSEUR
+        const pSexe   = document.getElementById("passeurSexe");
+        const pDob    = document.getElementById("passeurDob");
+        const pNat    = document.getElementById("passeurNationalite");
+        const pLieu   = document.getElementById("passeurLieu");
+        const pHeure  = document.getElementById("passeurHeure");
+        const pSuites = document.getElementById("passeurSuites");
+
+        if (pSexe)   pSexe.value   = sexeBrut;
+        if (pDob)    pDob.value    = dateNaiss;
+        if (pNat)    pNat.value    = nat;
+        if (pLieu)   pLieu.value   = lieu;
+        if (pHeure)  pHeure.value  = heure;
+        if (pSuites) pSuites.value = suites;
+
+        // statut majeur/mineur si besoin
+        if (typeof majPasseurStatut === "function") {
+          majPasseurStatut();
+        }
+
+        showPage("passeurPage");
+        alert('Fiche PASSEUR importée via QR.\nVérifie puis clique sur "Ajouter Passeur".');
+
+      } else {
+        // 👉 Par défaut : ESI
+        const eSexe   = document.getElementById("esiSexe");
+        const eDob    = document.getElementById("esiDob");
+        const eNat    = document.getElementById("esiNationalite");
+        const eLieu   = document.getElementById("esiLieu");
+        const eHeure  = document.getElementById("esiHeure");
+        const eSuites = document.getElementById("esiSuites");
+
+        if (eSexe)   eSexe.value   = sexeBrut;
+        if (eDob)    eDob.value    = dateNaiss;
+        if (eNat)    eNat.value    = nat;
+        if (eLieu)   eLieu.value   = lieu;
+        if (eHeure)  eHeure.value  = heure;
+        if (eSuites) eSuites.value = suites;
+
+
+if (typeof calculateAge === "function" && eDob && dateNaiss.length === 10) {
+  const age = calculateAge(dateNaiss);
+  if (age !== null) {
+    const ageNumInput = document.getElementById("esiAgeNum");
+    if (ageNumInput) {
+      ageNumInput.value = age;
+    }
+  }
+}
+        if (typeof majEsiStatut === "function") {
+          majEsiStatut();
+        }
+
+        showPage("esiPage");
+        alert('Fiche ESI importée via QR.\nVérifie puis clique sur "Ajouter ESI".');
+      }
+
+      // On arrête le scan et on ferme le modal pour voir la page ESI/PASSEUR
+      if (html5QrCode && isScanning) {
+        html5QrCode.stop().then(() => {
           isScanning = false;
-          html5QrCode.stop().then(() => {
-            setTimeout(() => {
-              if (document.getElementById('qrModal').style.display !== 'none') {
-                html5QrCode.start(
+        }).catch(() => {});
+      }
+      const modal = document.getElementById("qrModal");
+      if (modal) modal.style.display = "none";
+
+      return; // ✅ on ne traite PAS ce QR comme un QR ESR
+    }
+
+    /* 2️⃣ CAS ESR (NIGEND + comptages) : on garde ton comportement existant */
+    const parsed = parseQrPayload(texteDecode);
+    if (!parsed) return;
+    const { nigend, counts, pretty } = parsed;
+
+    if (state.scannedNigends.includes(nigend)) {
+      logScan("NIGEND " + nigend + " déjà scanné, ignoré.");
+      return;
+    }
+    state.scannedNigends.push(nigend);
+
+    Object.keys(counts).forEach((k) => {
+      if (!state.scansAgg[k]) state.scansAgg[k] = { v: 0, cv: 0, cf: 0 };
+      state.scansAgg[k].v  += counts[k].v;
+      state.scansAgg[k].cv += counts[k].cv;
+      state.scansAgg[k].cf += counts[k].cf;
+    });
+
+    const dejaEsr = (state.esrList || []).some((e) => e.nigend === parsed.nigend);
+    if (!dejaEsr && parsed.grade && parsed.nom && parsed.nigend && parsed.crt) {
+      state.esrList.push({
+        grade: parsed.grade,
+        nom:   parsed.nom,
+        nigend: parsed.nigend,
+        crt:   parsed.crt,
+      });
+      renderEsrList();
+      populateEsrSelects();
+      debounceSave();
+    }
+
+    state.resumeEsr += `NIGEND ${nigend}\n${pretty}\n\n`;
+    updateResumeEsrUI();
+    debounceSave();
+    logScan("QR ajouté : " + nigend);
+
+    // ⏸ pause 2s puis reprise auto comme avant
+    if (html5QrCode && isScanning) {
+      isScanning = false;
+      html5QrCode
+        .stop()
+        .then(() => {
+          setTimeout(() => {
+            if (document.getElementById("qrModal").style.display !== "none") {
+              html5QrCode
+                .start(
                   { facingMode: "environment" },
                   { fps: 10, qrbox: 250 },
                   onScanSuccess
-                ).then(()=>{ isScanning=true; }).catch(()=>{});
-              }
-            }, 2000);
-          }).catch(()=>{});
-        }
-      } catch(e) {
-        console.error(e);
-      }
+                )
+                .then(() => {
+                  isScanning = true;
+                })
+                .catch(() => {});
+            }
+          }, 2000);
+        })
+        .catch(() => {});
     }
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+
 
     function parseQrPayload(raw) {
   const lines = String(raw).split(/\n+/).map(l => l.trim()).filter(Boolean);
