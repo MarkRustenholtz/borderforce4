@@ -1,11 +1,11 @@
 {
-  "name": "BorderForce",
+  "name": "Suite BorderForce",
   "short_name": "BorderForce",
-  "description": "Application PWA pour générer les comptes rendus de missions",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#2c3e50",
+  "background_color": "#003366",
+  "theme_color": "#003366",
   "icons": [
     {
       "src": "icon-192.png",
@@ -19,4 +19,3 @@
     }
   ]
 }
-
