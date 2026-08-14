@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10233f">
+  <meta name="robots" content="noindex, nofollow">
+  <title>BorderForce — Nouvelle application</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --navy: #10233f;
+      --navy-dark: #09172b;
+      --blue: #1e6fe8;
+      --blue-hover: #155bc2;
+      --text: #182235;
+      --muted: #667085;
+      --surface: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top, rgba(30, 111, 232, 0.25), transparent 38%),
+        linear-gradient(145deg, var(--navy-dark), var(--navy));
+    }
+
+    main {
+      width: min(100%, 520px);
+      padding: clamp(32px, 8vw, 54px) clamp(24px, 7vw, 46px);
+      text-align: center;
+      background: var(--surface);
+      border-radius: 24px;
+      box-shadow: 0 24px 65px rgba(0, 0, 0, 0.3);
+    }
+
+    .icon {
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 24px;
+      display: grid;
+      place-items: center;
+      border-radius: 22px;
+      color: #ffffff;
+      font-size: 34px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--blue), #55a0ff);
+      box-shadow: 0 12px 28px rgba(30, 111, 232, 0.3);
+    }
+
+    h1 {
+      margin: 0 0 14px;
+      font-size: clamp(28px, 7vw, 38px);
+      line-height: 1.12;
+      letter-spacing: -0.03em;
+    }
+
+    p {
+      margin: 0 auto;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.6;
+    }
+
+    .button {
+      width: 100%;
+      min-height: 58px;
+      margin-top: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 15px 22px;
+      border-radius: 14px;
+      color: #ffffff;
+      font-size: 17px;
+      font-weight: 750;
+      text-decoration: none;
+      background: var(--blue);
+      box-shadow: 0 10px 22px rgba(30, 111, 232, 0.28);
+      transition: transform 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+    }
+
+    .button:hover {
+      background: var(--blue-hover);
+      box-shadow: 0 12px 26px rgba(30, 111, 232, 0.36);
+      transform: translateY(-2px);
+    }
+
+    .button:active {
+      transform: translateY(0);
+    }
+
+    .button:focus-visible {
+      outline: 4px solid rgba(30, 111, 232, 0.3);
+      outline-offset: 4px;
+    }
+
+    .arrow {
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .note {
+      margin-top: 20px;
+      font-size: 13px;
+    }
+
+    @media (max-width: 420px) {
+      body {
+        padding: 16px;
+      }
+
+      main {
+        border-radius: 20px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .button {
+        transition: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="icon" aria-hidden="true">BF</div>
+    <h1>L’application a changé</h1>
+    <p>
+      Cette version n’est plus utilisée.<br>
+      Clique sur le bouton ci-dessous pour accéder à la nouvelle application BorderForce.
+    </p>
+
+    <a class="button" href="https://markrustenholtz.github.io/borderforce/index.html">
+      Nouvelle application
+      <span class="arrow" aria-hidden="true">→</span>
+    </a>
+
+    <p class="note">Pense à remplacer ton ancien raccourci par le nouveau.</p>
+  </main>
+</body>
+</html>
